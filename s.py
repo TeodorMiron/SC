@@ -129,9 +129,18 @@ def conn_to_pg(plaintext, aesKey):
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.connect((HOST2, PORT2))
-
         jsonobject2 = json.loads(plaintext, object_hook=JSONObject)
         jsonobject2 = json.loads(jsonobject2.CardInfo, object_hook=JSONObject)
+        myCard = Card()
+        myCard.Card = jsonobject2.Card
+        myCard.CardExp = jsonobject2.CardExp
+        myCard.CCode = jsonobject2.CCode
+        myCard.Sid = jsonobject2.Sid
+        myCard.Amonut = jsonobject2.Amonut
+        myCard.PunKC = jsonobject2.PunKC
+        myCard.NC = jsonobject2.NC
+        myCard.M = jsonobject2.M
+
         key = RSA.importKey(open('mykey.pem').read())
         cipher = PKCS1_OAEP.new(key)
         ciphertext = cipher.encrypt(aesKey)
@@ -145,15 +154,15 @@ def conn_to_pg(plaintext, aesKey):
         Sid = bytes(jsonStr, 'utf-8')
         key = RSA.import_key(open('private.key').read())
         hash = SHA256.new(Sid)
-
-        jsonStr3 = json.dumps(plaintext.__dict__)
         signn = pkcs1_15.new(key)
         signature = signn.sign(hash)
-
-
+        jsonStr3 = json.dumps(myCard.__dict__)
         myPG23.PM = jsonStr3
-        print('asd', plaintext)
         myPG23.SigM = signature.hex()
+
+
+        print('asd', plaintext)
+
 
 
         jsonStr = json.dumps(myPG23.__dict__)

@@ -43,6 +43,6 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             print(plaintext)
             jsonobject2 = json.loads(plaintext, object_hook=JSONObject)
             jsonobject3 = json.loads(jsonobject2.PM, object_hook=JSONObject)
-            print(jsonobject3)
+            print(jsonobject3.Card)
             print(bytes.fromhex(jsonobject3))
 
