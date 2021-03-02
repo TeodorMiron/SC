@@ -5,6 +5,7 @@ from Crypto.Hash import SHA256
 import json
 import socket
 from Cryptodome.Util.Padding import unpad
+from Cryptodome.Util.Padding import pad
 from Cryptodome.Signature import pkcs1_15
 
 BLOCK_SIZE = 128
@@ -13,8 +14,58 @@ class JSONObject:
   def __init__( self, dict ):
       vars(self).update( dict )
 
+
+
+
+class PO:
+    OrderDesc = ''
+    Sid = ''
+    Amount = ''
+    NC = ''
+
+myPo = PO()
+
+myPo.OrderDesc = 'muraturi'
+myPo.Amount='4'
+myPo.NC='NC'
+
+class Card:
+    CardN=''
+    CardExp=''
+    CCode=''
+    Sid=''
+    Amount=''
+    PunKC=''
+    NC=''
+    M=''
+
+class CardSID:
+    CardInfo = ''
+    CardS = ''
+
+
+class POSID:
+    PM=''
+    POINFO = ''
+    POS = ''
+
+myPOSID = POSID()
+
+my_CardSID = CardSID()
+
+
 aesKey=get_random_bytes(16)
 print(aesKey)
+
+myCard = Card()
+myCard.Card='1111222233334444'
+myCard.CardExp='02/22'
+myCard.CCode = '123'
+myCard.Sid = ''
+myCard.Amonut='73'
+myCard.PunKC= aesKey.hex()
+myCard.NC='NC'
+myCard.M='M'
 
 def client_program():
     host = socket.gethostname()  # as both code is running on same pc
@@ -50,11 +101,51 @@ def client_program():
         try:
             pkcs1_15.new(key).verify(hash2,text)
             print("valid")
+            myCard.Sid = str(jsonobject.sid)
+            myPo.Sid = str(jsonobject.sid)
         except(ValueError,TabError):
             print("invalid")
 
 
 
+        jsonStr = json.dumps(myCard.__dict__)
+        my_CardSID.CardInfo = jsonStr
+
+        Sid = bytes(jsonStr, 'utf-8')
+        key = RSA.import_key(open('private.key').read())
+        hash = SHA256.new(Sid)
+
+        signn = pkcs1_15.new(key)
+        signature = signn.sign(hash)
+        my_CardSID.CardS = signature.hex()
+
+        PoJS = json.dumps(myPo.__dict__)
+        myPOSID.POINFO = PoJS
+        Sid = bytes(jsonStr, 'utf-8')
+        key = RSA.import_key(open('private.key').read())
+        hash = SHA256.new(Sid)
+
+        signn = pkcs1_15.new(key)
+        signature = signn.sign(hash)
+        myPOSID.POS = signature.hex()
+
+
+        jsonStr = json.dumps(my_CardSID.__dict__)
+        res = bytes(jsonStr, 'utf-8')
+
+        res = pad(res, BLOCK_SIZE)
+        cipher = AES.new(aesKey, AES.MODE_ECB)
+        ciphertext = cipher.encrypt(res)
+
+        myPOSID.PM = ciphertext.hex()
+
+        jsonStr = json.dumps(myPOSID.__dict__)
+        res = bytes(jsonStr, 'utf-8')
+        res = pad(res, BLOCK_SIZE)
+        cipher = AES.new(aesKey, AES.MODE_ECB)
+        ciphertext = cipher.encrypt(res)
+
+        client_socket.send(ciphertext)
 
     client_socket.close()  # close the connection
 
