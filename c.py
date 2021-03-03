@@ -75,6 +75,8 @@ def client_program():
     client_socket.connect((host, port))  # connect to the server
     message=''
 
+    ##### 1 ####
+
     key = RSA.importKey(open('mykey.pem').read())
     cipher = PKCS1_OAEP.new(key)
     ciphertext = cipher.encrypt(aesKey)
@@ -82,12 +84,18 @@ def client_program():
 
     client_socket.send(message)
 
+    ##### 1 ####
+
+    ##### 2 ####
+
     ciphertext = client_socket.recv(1024)
     key = RSA.importKey(open('mykey.pem').read())
     cipher = PKCS1_OAEP.new(key)
     message = cipher.decrypt(ciphertext)
     print(message)
     aesKeyKM = message
+
+
 
     ciphertext = client_socket.recv(1024)  # receive response
 
@@ -113,8 +121,9 @@ def client_program():
     except(ValueError,TabError):
         print("invalid")
 
+    ##### 2 ####
 
-
+    ##### 3 ####
     jsonStr = json.dumps(myCard.__dict__)
     my_CardSID.CardInfo = jsonStr
 
@@ -153,6 +162,9 @@ def client_program():
     ciphertext = cipher.encrypt(res)
     client_socket.send(ciphertext)
 
+    ##### 3 ####
+
+    ##### 6 ####
     response=client_socket.recv(5048)
     cipher = AES.new(aesKey, AES.MODE_ECB)
     plaintext = cipher.decrypt(response)
@@ -165,7 +177,7 @@ def client_program():
         myCard.Amonut=str(int(myCard.Amonut)-int(myPo.Amount))
         print(myCard.Amonut)
 
-
+    ##### 6 ####
 
 
     client_socket.close()  # close the connection

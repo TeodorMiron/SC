@@ -49,6 +49,9 @@ def server_program():
     print("Connection from: " + str(address))
 
     # receive data stream. it won't accept data packet greater than 1024 bytes
+
+    ##### 1 ####
+
     data = conn.recv(1024)
 
     key = RSA.importKey(open('mykey.pem').read())
@@ -57,6 +60,9 @@ def server_program():
     print(message)
     aesKey=message
 
+    ##### 1 ####
+
+    ##### 2 ####
     key = RSA.importKey(open('mykey.pem').read())
     cipher = PKCS1_OAEP.new(key)
     ciphertext = cipher.encrypt(aesKeyKM)
@@ -88,6 +94,10 @@ def server_program():
 
     conn.send(ciphertext)
 
+    ##### 2 ####
+
+    ##### 3 ####
+
     ciphertext  = conn.recv(5096)
 
     cipher = AES.new(aesKeyKM, AES.MODE_ECB)
@@ -118,13 +128,19 @@ def server_program():
     myCard.M = jsonobject2.M
 
     conn.settimeout(1)
+
+    ##### 3 ####
+
     response=conn_to_pg(plaintext, aesKey)
 
+    ##### 6 ####
     cipher = AES.new(aesKey, AES.MODE_ECB)
     plaintext = cipher.decrypt(response)
     plaintext = unpad(plaintext, BLOCK_SIZE)
 
+
     conn.send(response)
+    ##### 6 ####
 
 
 
@@ -156,6 +172,9 @@ def conn_to_pg(plaintext, aesKey):
 
 
         s.connect((HOST2, PORT2))
+
+        ##### 4 ####
+
         jsonobject2 = json.loads(plaintext, object_hook=JSONObject)
         jsonobject2 = json.loads(jsonobject2.CardInfo, object_hook=JSONObject)
         myCard = Card()
@@ -174,6 +193,8 @@ def conn_to_pg(plaintext, aesKey):
         message = ciphertext
 
         s.send(message)
+
+
 
         data = s.recv(1024)
         key = RSA.importKey(open('mykey.pem').read())
@@ -206,6 +227,11 @@ def conn_to_pg(plaintext, aesKey):
         ciphertext = cipher.encrypt(res)
 
         s.send(ciphertext)
+
+        ##### 4 ####
+
+        ##### 5 ####
+
         ciphertext = s.recv(6024)
         cipher = AES.new(aesKeyKM, AES.MODE_ECB)
         plaintext = cipher.decrypt(ciphertext)
@@ -217,6 +243,7 @@ def conn_to_pg(plaintext, aesKey):
         s.close()
         return(ciphertext)
 
+        ##### 5 ####
 
         #data = s.recv(1024)
 
