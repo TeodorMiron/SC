@@ -80,7 +80,15 @@ def client_program():
     ciphertext = cipher.encrypt(aesKey)
     message=ciphertext
 
-    client_socket.send(message)  # send message
+    client_socket.send(message)
+
+    ciphertext = client_socket.recv(1024)
+    key = RSA.importKey(open('mykey.pem').read())
+    cipher = PKCS1_OAEP.new(key)
+    message = cipher.decrypt(ciphertext)
+    print(message)
+    aesKeyKM = message
+
     ciphertext = client_socket.recv(1024)  # receive response
 
     cipher = AES.new(aesKey, AES.MODE_ECB)
@@ -133,7 +141,7 @@ def client_program():
     res = bytes(jsonStr, 'utf-8')
 
     res = pad(res, BLOCK_SIZE)
-    cipher = AES.new(aesKey, AES.MODE_ECB)
+    cipher = AES.new(aesKeyKM, AES.MODE_ECB)
     ciphertext = cipher.encrypt(res)
 
     myPOSID.PM = ciphertext.hex()
@@ -141,7 +149,7 @@ def client_program():
     jsonStr = json.dumps(myPOSID.__dict__)
     res = bytes(jsonStr, 'utf-8')
     res = pad(res, BLOCK_SIZE)
-    cipher = AES.new(aesKey, AES.MODE_ECB)
+    cipher = AES.new(aesKeyKM, AES.MODE_ECB)
     ciphertext = cipher.encrypt(res)
     client_socket.send(ciphertext)
 

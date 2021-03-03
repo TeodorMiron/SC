@@ -31,6 +31,7 @@ signature=sign()
 
 responeR=respone()
 
+aesKeyKPG=get_random_bytes(16)
 
 BLOCK_SIZE = 128
 
@@ -43,14 +44,27 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     conn, addr = s.accept()
     with conn:
         print('Connected by', addr)
+
+
+
         data = conn.recv(1024)
         key = RSA.importKey(open('mykey.pem').read())
         cipher = PKCS1_OAEP.new(key)
         message = cipher.decrypt(data)
         print(message)
-        aesKey = message
+        aesKeyKM = message
+
+        key = RSA.importKey(open('mykey.pem').read())
+        cipher = PKCS1_OAEP.new(key)
+        ciphertext = cipher.encrypt(aesKeyKPG)
+        message = ciphertext
+
+        conn.send(message)
+
+
+
         ciphertext = conn.recv(6024)
-        cipher = AES.new(aesKey, AES.MODE_ECB)
+        cipher = AES.new(aesKeyKPG, AES.MODE_ECB)
         plaintext = cipher.decrypt(ciphertext)
         plaintext = unpad(plaintext, BLOCK_SIZE)
         print(plaintext)
@@ -80,7 +94,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         jsonStr = json.dumps(responeR.__dict__)
         Sid = bytes(jsonStr, 'utf-8')
         res = pad(Sid, BLOCK_SIZE)
-        cipher = AES.new(aesKey, AES.MODE_ECB)
+        cipher = AES.new(aesKeyKM, AES.MODE_ECB)
         ciphertext = cipher.encrypt(res)
         conn.send(ciphertext)
 

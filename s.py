@@ -30,6 +30,8 @@ class mesage1:
     sid=''
     sigSid=''
 
+aesKeyKM=get_random_bytes(16)
+
 mmesage1=mesage1()
 
 def server_program():
@@ -54,6 +56,14 @@ def server_program():
     message = cipher.decrypt(data)
     print(message)
     aesKey=message
+
+    key = RSA.importKey(open('mykey.pem').read())
+    cipher = PKCS1_OAEP.new(key)
+    ciphertext = cipher.encrypt(aesKeyKM)
+    message = ciphertext
+
+    conn.send(message)
+
 
     Sid=random.randrange(1000,10000)
     print(Sid)
@@ -80,7 +90,7 @@ def server_program():
 
     ciphertext  = conn.recv(5096)
 
-    cipher = AES.new(aesKey, AES.MODE_ECB)
+    cipher = AES.new(aesKeyKM, AES.MODE_ECB)
     plaintext = cipher.decrypt(ciphertext)
     plaintext = unpad(plaintext, BLOCK_SIZE)
     #print(plaintext)
@@ -91,7 +101,7 @@ def server_program():
 
 
 
-    cipher = AES.new(aesKey, AES.MODE_ECB)
+    cipher = AES.new(aesKeyKM, AES.MODE_ECB)
     plaintext = cipher.decrypt(jsonobject2)
     plaintext = unpad(plaintext, BLOCK_SIZE)
     print(plaintext)
@@ -142,6 +152,9 @@ def conn_to_pg(plaintext, aesKey):
     PORT2 = 65432  # The port used by the server
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+
+
+
         s.connect((HOST2, PORT2))
         jsonobject2 = json.loads(plaintext, object_hook=JSONObject)
         jsonobject2 = json.loads(jsonobject2.CardInfo, object_hook=JSONObject)
@@ -157,10 +170,19 @@ def conn_to_pg(plaintext, aesKey):
 
         key = RSA.importKey(open('mykey.pem').read())
         cipher = PKCS1_OAEP.new(key)
-        ciphertext = cipher.encrypt(aesKey)
+        ciphertext = cipher.encrypt(aesKeyKM)
         message = ciphertext
 
-        s.send(message)  # send message
+        s.send(message)
+
+        data = s.recv(1024)
+        key = RSA.importKey(open('mykey.pem').read())
+        cipher = PKCS1_OAEP.new(key)
+        message = cipher.decrypt(data)
+        print(message)
+        aesKeyKPG = message
+
+        # send message
         myPG4.Sid = jsonobject2.Sid
         myPG4.Amonut = jsonobject2.Amonut
         myPG4.PunKC = jsonobject2.PunKC
@@ -180,17 +202,21 @@ def conn_to_pg(plaintext, aesKey):
         jsonStr = json.dumps(myPG23.__dict__)
         res = bytes(jsonStr, 'utf-8')
         res = pad(res, BLOCK_SIZE)
-        cipher = AES.new(aesKey, AES.MODE_ECB)
+        cipher = AES.new(aesKeyKPG, AES.MODE_ECB)
         ciphertext = cipher.encrypt(res)
 
         s.send(ciphertext)
         ciphertext = s.recv(6024)
-        cipher = AES.new(aesKey, AES.MODE_ECB)
+        cipher = AES.new(aesKeyKM, AES.MODE_ECB)
         plaintext = cipher.decrypt(ciphertext)
-        plaintext = unpad(plaintext, BLOCK_SIZE)
+
+        cipher = AES.new(aesKey, AES.MODE_ECB)
+        ciphertext = cipher.encrypt(plaintext)
+
         print(plaintext)
-        return(ciphertext)
         s.close()
+        return(ciphertext)
+
 
         #data = s.recv(1024)
 
