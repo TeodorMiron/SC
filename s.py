@@ -45,67 +45,68 @@ def server_program():
     server_socket.listen(2)
     conn, address = server_socket.accept()  # accept new connection
     print("Connection from: " + str(address))
-    while True:
-        # receive data stream. it won't accept data packet greater than 1024 bytes
-        data = conn.recv(1024)
 
-        key = RSA.importKey(open('mykey.pem').read())
-        cipher = PKCS1_OAEP.new(key)
-        message = cipher.decrypt(data)
-        print(message)
-        aesKey=message
+    # receive data stream. it won't accept data packet greater than 1024 bytes
+    data = conn.recv(1024)
 
-        Sid=random.randrange(1000,10000)
-        print(Sid)
-        mmesage1.sid=Sid
+    key = RSA.importKey(open('mykey.pem').read())
+    cipher = PKCS1_OAEP.new(key)
+    message = cipher.decrypt(data)
+    print(message)
+    aesKey=message
 
-        Sid = bytes(str(Sid), 'utf-8')
-        key=RSA.import_key(open('private.key').read())
-        hash=SHA256.new(Sid)
+    Sid=random.randrange(1000,10000)
+    print(Sid)
+    mmesage1.sid=Sid
 
-        signn=pkcs1_15.new(key)
-        signature=signn.sign(hash)
-        print(signature)
-        mmesage1.sigSid=signature.hex()
-        print("da")
-        print(mmesage1.sigSid)
-        jsonStr = json.dumps(mmesage1.__dict__)
-        res = bytes(jsonStr, 'utf-8')
+    Sid = bytes(str(Sid), 'utf-8')
+    key=RSA.import_key(open('private.key').read())
+    hash=SHA256.new(Sid)
 
-        res=pad(res,BLOCK_SIZE)
-        cipher = AES.new(aesKey, AES.MODE_ECB)
-        ciphertext = cipher.encrypt(res)
+    signn=pkcs1_15.new(key)
+    signature=signn.sign(hash)
+    print(signature)
+    mmesage1.sigSid=signature.hex()
+    print("da")
+    print(mmesage1.sigSid)
+    jsonStr = json.dumps(mmesage1.__dict__)
+    res = bytes(jsonStr, 'utf-8')
 
-        conn.send(ciphertext)
+    res=pad(res,BLOCK_SIZE)
+    cipher = AES.new(aesKey, AES.MODE_ECB)
+    ciphertext = cipher.encrypt(res)
 
-        ciphertext  = conn.recv(5096)
+    conn.send(ciphertext)
 
-        cipher = AES.new(aesKey, AES.MODE_ECB)
-        plaintext = cipher.decrypt(ciphertext)
-        plaintext = unpad(plaintext, BLOCK_SIZE)
-        #print(plaintext)
+    ciphertext  = conn.recv(5096)
 
-        jsonobject = json.loads(plaintext, object_hook=JSONObject)
-        jsonobject2 = jsonobject.PM
-        jsonobject2 = bytes.fromhex(jsonobject2)
+    cipher = AES.new(aesKey, AES.MODE_ECB)
+    plaintext = cipher.decrypt(ciphertext)
+    plaintext = unpad(plaintext, BLOCK_SIZE)
+    #print(plaintext)
 
-        cipher = AES.new(aesKey, AES.MODE_ECB)
-        plaintext = cipher.decrypt(jsonobject2)
-        plaintext = unpad(plaintext, BLOCK_SIZE)
-        print(plaintext)
-        jsonobject2 = json.loads(plaintext, object_hook=JSONObject)
-        jsonobject2 = json.loads(jsonobject2.CardInfo, object_hook=JSONObject)
-        myCard = Card()
-        myCard.Card = jsonobject2.Card
-        myCard.CardExp = jsonobject2.CardExp
-        myCard.CCode = jsonobject2.CCode
-        myCard.Sid = jsonobject2.Sid
-        myCard.Amonut = jsonobject2.Amonut
-        myCard.PunKC = jsonobject2.PunKC
-        myCard.NC = jsonobject2.NC
-        myCard.M = jsonobject2.M
+    jsonobject = json.loads(plaintext, object_hook=JSONObject)
+    jsonobject2 = jsonobject.PM
+    jsonobject2 = bytes.fromhex(jsonobject2)
 
-        conn_to_pg(plaintext, aesKey)
+    cipher = AES.new(aesKey, AES.MODE_ECB)
+    plaintext = cipher.decrypt(jsonobject2)
+    plaintext = unpad(plaintext, BLOCK_SIZE)
+    print(plaintext)
+    jsonobject2 = json.loads(plaintext, object_hook=JSONObject)
+    jsonobject2 = json.loads(jsonobject2.CardInfo, object_hook=JSONObject)
+    myCard = Card()
+    myCard.Card = jsonobject2.Card
+    myCard.CardExp = jsonobject2.CardExp
+    myCard.CCode = jsonobject2.CCode
+    myCard.Sid = jsonobject2.Sid
+    myCard.Amonut = jsonobject2.Amonut
+    myCard.PunKC = jsonobject2.PunKC
+    myCard.NC = jsonobject2.NC
+    myCard.M = jsonobject2.M
+
+    conn_to_pg(plaintext, aesKey)
+
 
 
 
@@ -157,13 +158,11 @@ def conn_to_pg(plaintext, aesKey):
         signn = pkcs1_15.new(key)
         signature = signn.sign(hash)
         jsonStr3 = json.dumps(myCard.__dict__)
+        print('b sigm', signature)
         myPG23.PM = jsonStr3
         myPG23.SigM = signature.hex()
 
-
         print('asd', plaintext)
-
-
 
         jsonStr = json.dumps(myPG23.__dict__)
         res = bytes(jsonStr, 'utf-8')
@@ -172,9 +171,9 @@ def conn_to_pg(plaintext, aesKey):
         ciphertext = cipher.encrypt(res)
 
         s.send(ciphertext)
-
+        s.close()
+        return
         #data = s.recv(1024)
-
 
 
 server_program()

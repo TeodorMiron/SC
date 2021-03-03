@@ -29,20 +29,22 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     conn, addr = s.accept()
     with conn:
         print('Connected by', addr)
-        while True:
-            data = conn.recv(1024)
-            key = RSA.importKey(open('mykey.pem').read())
-            cipher = PKCS1_OAEP.new(key)
-            message = cipher.decrypt(data)
-            print(message)
-            aesKey = message
-            ciphertext = conn.recv(6024)
-            cipher = AES.new(aesKey, AES.MODE_ECB)
-            plaintext = cipher.decrypt(ciphertext)
-            plaintext = unpad(plaintext, BLOCK_SIZE)
-            print(plaintext)
-            jsonobject2 = json.loads(plaintext, object_hook=JSONObject)
-            jsonobject3 = json.loads(jsonobject2.PM, object_hook=JSONObject)
-            print(jsonobject3.Card)
-            print(bytes.fromhex(jsonobject3))
+        data = conn.recv(1024)
+        key = RSA.importKey(open('mykey.pem').read())
+        cipher = PKCS1_OAEP.new(key)
+        message = cipher.decrypt(data)
+        print(message)
+        aesKey = message
+        ciphertext = conn.recv(6024)
+        cipher = AES.new(aesKey, AES.MODE_ECB)
+        plaintext = cipher.decrypt(ciphertext)
+        plaintext = unpad(plaintext, BLOCK_SIZE)
+        print(plaintext)
+        jsonobject2 = json.loads(plaintext, object_hook=JSONObject)
+        jsonobject3 = json.loads(jsonobject2.PM, object_hook=JSONObject)
+        SigM = jsonobject2.SigM
+        print(jsonobject3.Card)
+        print(bytes.fromhex(SigM))
+
+
 
