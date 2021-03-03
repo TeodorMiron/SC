@@ -89,6 +89,8 @@ def server_program():
     jsonobject2 = jsonobject.PM
     jsonobject2 = bytes.fromhex(jsonobject2)
 
+
+
     cipher = AES.new(aesKey, AES.MODE_ECB)
     plaintext = cipher.decrypt(jsonobject2)
     plaintext = unpad(plaintext, BLOCK_SIZE)
@@ -105,7 +107,18 @@ def server_program():
     myCard.NC = jsonobject2.NC
     myCard.M = jsonobject2.M
 
-    conn_to_pg(plaintext, aesKey)
+    conn.settimeout(1)
+    response=conn_to_pg(plaintext, aesKey)
+
+    cipher = AES.new(aesKey, AES.MODE_ECB)
+    plaintext = cipher.decrypt(response)
+    plaintext = unpad(plaintext, BLOCK_SIZE)
+
+    conn.send(response)
+
+
+
+
 
 
 
@@ -171,8 +184,14 @@ def conn_to_pg(plaintext, aesKey):
         ciphertext = cipher.encrypt(res)
 
         s.send(ciphertext)
+        ciphertext = s.recv(6024)
+        cipher = AES.new(aesKey, AES.MODE_ECB)
+        plaintext = cipher.decrypt(ciphertext)
+        plaintext = unpad(plaintext, BLOCK_SIZE)
+        print(plaintext)
+        return(ciphertext)
         s.close()
-        return
+
         #data = s.recv(1024)
 
 

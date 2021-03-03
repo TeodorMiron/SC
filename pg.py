@@ -17,6 +17,20 @@ class JSONObject:
   def __init__( self, dict ):
       vars(self).update( dict )
 
+class respone:
+    Rep=''
+    Sid=''
+    Sign=''
+
+class sign:
+    Rep=''
+    Sid=''
+    Amount=''
+    NC=''
+signature=sign()
+
+responeR=respone()
+
 
 BLOCK_SIZE = 128
 
@@ -45,6 +59,35 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         SigM = jsonobject2.SigM
         print(jsonobject3.Card)
         print(bytes.fromhex(SigM))
+
+        responeR.Sid=jsonobject3.Sid
+        responeR.Rep="1"
+
+        signature.Rep=responeR.Rep
+        signature.Sid=responeR.Sid
+        signature.Amount=jsonobject3.Amonut
+        signature.NC=jsonobject3.NC
+
+        jsonStr = json.dumps(signature.__dict__)
+        Sid = bytes(jsonStr, 'utf-8')
+        key = RSA.import_key(open('private.key').read())
+        hash = SHA256.new(Sid)
+        signn = pkcs1_15.new(key)
+        signature = signn.sign(hash)
+
+        responeR.Sign=signature.hex()
+
+        jsonStr = json.dumps(responeR.__dict__)
+        Sid = bytes(jsonStr, 'utf-8')
+        res = pad(Sid, BLOCK_SIZE)
+        cipher = AES.new(aesKey, AES.MODE_ECB)
+        ciphertext = cipher.encrypt(res)
+        conn.send(ciphertext)
+
+
+
+
+
 
 
 

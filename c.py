@@ -144,6 +144,22 @@ def client_program():
     cipher = AES.new(aesKey, AES.MODE_ECB)
     ciphertext = cipher.encrypt(res)
     client_socket.send(ciphertext)
+
+    response=client_socket.recv(5048)
+    cipher = AES.new(aesKey, AES.MODE_ECB)
+    plaintext = cipher.decrypt(response)
+    plaintext = unpad(plaintext, BLOCK_SIZE)
+
+    print(plaintext)
+    jsonobject2 = json.loads(plaintext, object_hook=JSONObject)
+    if(jsonobject2.Rep=="1"):
+        print("Plata efectuata")
+        myCard.Amonut=str(int(myCard.Amonut)-int(myPo.Amount))
+        print(myCard.Amonut)
+
+
+
+
     client_socket.close()  # close the connection
 
 client_program()
